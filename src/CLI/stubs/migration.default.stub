@@ -1,0 +1,23 @@
+<?php
+
+namespace {{ namespace }};
+
+use Yabasi\Database\Migrations\MigrationInterface;
+use Yabasi\Database\Connection;
+
+class {{ class }} implements MigrationInterface
+{
+    public function up(Connection $connection): void
+    {
+        $connection->schema()->create('{{ table }}', function ($table) {
+            $table->id();
+            // Add your columns here
+            $table->timestamps();
+        });
+    }
+
+    public function down(Connection $connection): void
+    {
+        $connection->schema()->dropIfExists('{{ table }}');
+    }
+}

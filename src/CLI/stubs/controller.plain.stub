@@ -1,0 +1,16 @@
+<?php
+
+namespace {{ namespace }};
+
+use Yabasi\Http\Request;
+use Yabasi\Http\Response;
+use Yabasi\Controller\Controller;
+
+class {{ class }} extends Controller
+{
+    public function index(Request $request): Response
+    {
+        // TODO: Implement index method
+        return $this->json(['message' => 'Hello from {{ class }}']);
+    }
+}

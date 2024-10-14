@@ -1,0 +1,30 @@
+<?php
+
+namespace {{ namespace }};
+
+use Yabasi\Database\Migrations\MigrationInterface;
+use Yabasi\Database\Connection;
+
+class {{ class }} implements MigrationInterface
+{
+    public function up(Connection $connection): void
+    {
+        $connection->schema()->create('{{ table }}', function ($table) {
+            $table->id();
+
+            // These are example columns. Modify them according to your needs:
+            $table->string('name');
+            $table->text('description')->nullable();
+            $table->integer('quantity')->default(0);
+            $table->decimal('price', 8, 2);
+            $table->boolean('is_active')->default(true);
+
+            $table->timestamps();
+        });
+    }
+
+    public function down(Connection $connection): void
+    {
+        $connection->schema()->dropIfExists('{{ table }}');
+    }
+}

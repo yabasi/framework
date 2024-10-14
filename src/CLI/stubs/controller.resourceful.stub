@@ -1,0 +1,52 @@
+<?php
+
+namespace {{ namespace }};
+
+use Yabasi\Http\Request;
+use Yabasi\Http\Response;
+use Yabasi\Controller\Controller;
+
+class {{ class }} extends Controller
+{
+    public function index(Request $request): Response
+    {
+        // TODO: Implement index method
+        return $this->json(['message' => 'Index method of {{ class }}']);
+    }
+
+    public function create(Request $request): Response
+    {
+        // TODO: Implement create method
+        return $this->json(['message' => 'Create method of {{ class }}']);
+    }
+
+    public function store(Request $request): Response
+    {
+        // TODO: Implement store method
+        return $this->json(['message' => 'Store method of {{ class }}']);
+    }
+
+    public function show(Request $request, $id): Response
+    {
+        // TODO: Implement show method
+        return $this->json(['message' => "Show method of {{ class }} for id: {$id}"]);
+    }
+
+    public function edit(Request $request, $id): Response
+    {
+        // TODO: Implement edit method
+        return $this->json(['message' => "Edit method of {{ class }} for id: {$id}"]);
+    }
+
+    public function update(Request $request, $id): Response
+    {
+        // TODO: Implement update method
+        return $this->json(['message' => "Update method of {{ class }} for id: {$id}"]);
+    }
+
+    public function destroy(Request $request, $id): Response
+    {
+        // TODO: Implement destroy method
+        return $this->json(['message' => "Destroy method of {{ class }} for id: {$id}"]);
+    }
+}

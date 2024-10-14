@@ -1,0 +1,29 @@
+<?php
+
+namespace {{ namespace }};
+
+use Closure;
+use Yabasi\Http\Request;
+use Yabasi\Http\Response;
+use Yabasi\Middleware\MiddlewareInterface;
+
+class {{ class }} implements MiddlewareInterface
+{
+    /**
+     * Handle an incoming request.
+     *
+     * @param Request $request
+     * @param Closure $next
+     * @return Response
+     */
+    public function handle(Request $request, Closure $next): Response
+    {
+        // Perform actions before the request is handled by the application
+
+        $response = $next($request);
+
+        // Perform actions after the request is handled by the application
+
+        return $response;
+    }
+}
