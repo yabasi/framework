@@ -40,7 +40,7 @@ class Console
     protected function registerCommands(): void
     {
         $filesystem = $this->container->make(Filesystem::class);
-        $vendorPath = $this->getVendorPath();
+        $vendorPath = $this->getStubPath();
 
 
         $this->console->add(new MakeModelCommand(new ModelGenerator($filesystem, $vendorPath)));
@@ -63,8 +63,9 @@ class Console
         return $this->console->run();
     }
 
-    protected function getVendorPath(): string
+    protected function getStubPath(): string
     {
-        return realpath(__DIR__ . '/vendor');
+        return dirname(__DIR__, 4) . '/vendor/yabasi/framework/src/CLI/stubs';
     }
+
 }
