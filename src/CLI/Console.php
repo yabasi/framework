@@ -63,13 +63,8 @@ class Console
         return $this->console->run();
     }
 
-    protected function getVendorPath(): ?string
+    protected function getVendorPath(): string
     {
-        $composerAutoloadPath = __DIR__ . '/../../vendor/autoload.php';
-        if (file_exists($composerAutoloadPath)) {
-            return dirname($composerAutoloadPath);
-        }
-
-        return null;
+        return realpath(__DIR__ . '/vendor');
     }
 }

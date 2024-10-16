@@ -69,19 +69,6 @@ class ControllerGenerator
 
     protected function getStubPath(string $stubName): string
     {
-        $possiblePaths = [
-            $this->vendorPath . '/yabasi/framework/src/CLI/stubs/' . $stubName,
-            __DIR__ . '/../../../../stubs/' . $stubName,
-            BASE_PATH . '/stubs/' . $stubName,
-        ];
-
-        foreach ($possiblePaths as $path) {
-            echo "Checking path: $path\n";
-            if (file_exists($path)) {
-                return $path;
-            }
-        }
-
-        throw new \RuntimeException("Stub file not found: {$stubName}");
+        return $this->vendorPath . '/yabasi/framework/src/CLI/stubs/' . $stubName;
     }
 }
