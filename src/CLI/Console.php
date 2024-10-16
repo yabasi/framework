@@ -65,7 +65,6 @@ class Console
 
     protected function getVendorPath(): string
     {
-        $reflection = new \ReflectionClass(\Composer\Autoload\ClassLoader::class);
-        return dirname($reflection->getFileName(), 3);
+        return realpath(__DIR__ . '/../../../../vendor');
     }
 }
