@@ -9,11 +9,13 @@ class MigrationGenerator
 {
     protected Filesystem $filesystem;
     protected string $migrationPath;
+    protected string $vendorPath;
     protected string $namespace = 'Yabasi\\Migrations';
 
-    public function __construct(Filesystem $filesystem, string $migrationPath = null)
+    public function __construct(Filesystem $filesystem, string $vendorPath, string $migrationPath = null)
     {
         $this->filesystem = $filesystem;
+        $this->vendorPath = $vendorPath;
         $this->migrationPath = $migrationPath ?? BASE_PATH . '/app/Migrations';
     }
 
@@ -56,11 +58,17 @@ class MigrationGenerator
 
     protected function getStub(string $type): string
     {
-        $stubPath = BASE_PATH . "/app/Core/CLI/stubs/migration.{$type}.stub";
-        if (!$this->filesystem->exists($stubPath)) {
-            $stubPath = BASE_PATH . "/app/Core/CLI/stubs/migration.default.stub";
+        $stubPath = $this->getStubPath("migration.{$type}.stub");
+
+        if (!file_exists($stubPath)) {
+            $stubPath = $this->getStubPath("migration.default.stub");
         }
-        return $this->filesystem->get($stubPath);
+
+        if (!file_exists($stubPath)) {
+            throw new \RuntimeException("Stub file not found: {$stubPath}");
+        }
+
+        return file_get_contents($stubPath);
     }
 
     protected function populateStub(string $stub, string $className, string $tableName): string
@@ -72,5 +80,10 @@ class MigrationGenerator
         ];
 
         return str_replace(array_keys($replacements), array_values($replacements), $stub);
+    }
+
+    protected function getStubPath(string $stubName): string
+    {
+        return $this->vendorPath . '/yabasi/framework/src/CLI/stubs/' . $stubName;
     }
 }

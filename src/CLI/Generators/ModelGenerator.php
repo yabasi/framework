@@ -8,10 +8,12 @@ use Yabasi\Support\Str;
 class ModelGenerator
 {
     protected Filesystem $filesystem;
+    protected string $vendorPath;
 
-    public function __construct(Filesystem $filesystem)
+    public function __construct(Filesystem $filesystem, string $vendorPath)
     {
         $this->filesystem = $filesystem;
+        $this->vendorPath = $vendorPath;
     }
 
     public function generate(string $name, ?string $table = null): string
@@ -45,7 +47,13 @@ class ModelGenerator
 
     protected function getStub(): string
     {
-        return $this->filesystem->get(BASE_PATH . '/app/Core/CLI/stubs/model.stub');
+        $stubPath = $this->getStubPath('model.stub');
+
+        if (!file_exists($stubPath)) {
+            throw new \RuntimeException("Stub file not found: {$stubPath}");
+        }
+
+        return file_get_contents($stubPath);
     }
 
     protected function populateStub(string $stub, string $modelName, string $namespace, string $tableName): string
@@ -62,5 +70,10 @@ class ModelGenerator
     protected function generateTableName(string $modelName): string
     {
         return Str::snake(Str::pluralStudly($modelName));
+    }
+
+    protected function getStubPath(string $stubName): string
+    {
+        return $this->vendorPath . '/yabasi/framework/src/CLI/stubs/' . $stubName;
     }
 }

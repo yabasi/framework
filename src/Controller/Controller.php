@@ -3,9 +3,6 @@
 namespace Yabasi\Controller;
 
 use Exception;
-use Twig\Error\LoaderError;
-use Twig\Error\RuntimeError;
-use Twig\Error\SyntaxError;
 use Yabasi\Container\Container;
 use Yabasi\Http\Response;
 use Yabasi\View\Template;
@@ -25,9 +22,9 @@ abstract class Controller
     }
 
     /**
-     * @throws SyntaxError
-     * @throws RuntimeError
-     * @throws LoaderError
+     * @param string $view
+     * @param array $data
+     * @return Response
      */
     protected function view(string $view, array $data = []): Response
     {

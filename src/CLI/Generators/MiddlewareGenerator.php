@@ -8,10 +8,12 @@ use Yabasi\Support\Str;
 class MiddlewareGenerator
 {
     protected Filesystem $filesystem;
+    protected string $vendorPath;
 
-    public function __construct(Filesystem $filesystem)
+    public function __construct(Filesystem $filesystem, string $vendorPath)
     {
         $this->filesystem = $filesystem;
+        $this->vendorPath = $vendorPath;
     }
 
     public function generate(string $name): string
@@ -45,7 +47,13 @@ class MiddlewareGenerator
 
     protected function getStub(): string
     {
-        return $this->filesystem->get(BASE_PATH . "/app/Core/CLI/stubs/middleware.stub");
+        $stubPath = $this->getStubPath('middleware.stub');
+
+        if (!file_exists($stubPath)) {
+            throw new \RuntimeException("Stub file not found: {$stubPath}");
+        }
+
+        return file_get_contents($stubPath);
     }
 
     protected function populateStub(string $stub, string $middlewareName, string $namespace): string
@@ -56,5 +64,10 @@ class MiddlewareGenerator
         ];
 
         return str_replace(array_keys($replacements), array_values($replacements), $stub);
+    }
+
+    protected function getStubPath(string $stubName): string
+    {
+        return $this->vendorPath . '/yabasi/framework/src/CLI/stubs/' . $stubName;
     }
 }

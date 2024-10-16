@@ -8,10 +8,12 @@ use Yabasi\Support\Str;
 class ControllerGenerator
 {
     protected Filesystem $filesystem;
+    protected string $vendorPath;
 
-    public function __construct(Filesystem $filesystem)
+    public function __construct(Filesystem $filesystem, string $vendorPath)
     {
         $this->filesystem = $filesystem;
+        $this->vendorPath = $vendorPath;
     }
 
     public function generate(string $name, bool $resourceful = false): string
@@ -46,7 +48,13 @@ class ControllerGenerator
     protected function getStub(bool $resourceful): string
     {
         $stubName = $resourceful ? 'controller.resourceful.stub' : 'controller.plain.stub';
-        return $this->filesystem->get(BASE_PATH . "/app/Core/CLI/stubs/{$stubName}");
+        $stubPath = $this->getStubPath($stubName);
+
+        if (!file_exists($stubPath)) {
+            throw new \RuntimeException("Stub file not found: {$stubPath}");
+        }
+
+        return file_get_contents($stubPath);
     }
 
     protected function populateStub(string $stub, string $controllerName, string $namespace): string
@@ -57,5 +65,10 @@ class ControllerGenerator
         ];
 
         return str_replace(array_keys($replacements), array_values($replacements), $stub);
+    }
+
+    protected function getStubPath(string $stubName): string
+    {
+        return $this->vendorPath . '/yabasi/framework/src/CLI/stubs/' . $stubName;
     }
 }

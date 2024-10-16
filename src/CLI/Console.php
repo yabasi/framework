@@ -2,6 +2,7 @@
 
 namespace Yabasi\CLI;
 
+use Exception;
 use Symfony\Component\Console\Application as SymfonyConsole;
 use Yabasi\CLI\Commands\DatabaseDumpCommand;
 use Yabasi\CLI\Commands\DatabaseRestoreCommand;
@@ -14,7 +15,10 @@ use Yabasi\CLI\Commands\MigrateRefreshCommand;
 use Yabasi\CLI\Commands\MigrateResetCommand;
 use Yabasi\CLI\Commands\MigrateRollbackCommand;
 use Yabasi\CLI\Commands\MigrateStatusCommand;
+use Yabasi\CLI\Generators\ControllerGenerator;
+use Yabasi\CLI\Generators\MiddlewareGenerator;
 use Yabasi\CLI\Generators\MigrationGenerator;
+use Yabasi\CLI\Generators\ModelGenerator;
 use Yabasi\Container\Container;
 use Yabasi\Filesystem\Filesystem;
 
@@ -30,16 +34,19 @@ class Console
         $this->registerCommands();
     }
 
+    /**
+     * @throws Exception
+     */
     protected function registerCommands(): void
     {
         $filesystem = $this->container->make(Filesystem::class);
-        $migrationGenerator = new MigrationGenerator($filesystem);
+        $vendorPath = $this->getVendorPath();
 
-        $this->console->add($this->container->make(MakeModelCommand::class));
-        $this->console->add($this->container->make(MakeControllerCommand::class));
-        $this->console->add($this->container->make(MakeMiddlewareCommand::class));
 
-        $this->console->add(new MakeMigrationCommand($migrationGenerator));
+        $this->console->add(new MakeModelCommand(new ModelGenerator($filesystem, $vendorPath)));
+        $this->console->add(new MakeControllerCommand(new ControllerGenerator($filesystem, $vendorPath)));
+        $this->console->add(new MakeMiddlewareCommand(new MiddlewareGenerator($filesystem, $vendorPath)));
+        $this->console->add(new MakeMigrationCommand(new MigrationGenerator($filesystem, $vendorPath)));
 
         $this->console->add($this->container->make(MigrateCommand::class));
         $this->console->add($this->container->make(MigrateRollbackCommand::class));
@@ -54,5 +61,11 @@ class Console
     public function run(array $argv): int
     {
         return $this->console->run();
+    }
+
+    protected function getVendorPath(): string
+    {
+        $reflection = new \ReflectionClass(\Composer\Autoload\ClassLoader::class);
+        return dirname($reflection->getFileName(), 3);
     }
 }
