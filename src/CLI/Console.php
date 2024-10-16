@@ -65,7 +65,7 @@ class Console
 
     protected function getStubPath(): string
     {
-        return dirname(__DIR__, 4) . '/vendor/yabasi/framework/src/CLI/stubs';
+        return dirname(__DIR__, 4) . '/yabasi/framework/src/CLI/stubs/';
     }
 
 }
