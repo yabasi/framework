@@ -68,6 +68,6 @@ class MiddlewareGenerator
 
     protected function getStubPath(string $stubName): string
     {
-        return $this->vendorPath . '/yabasi/framework/src/CLI/stubs/' . $stubName;
+        return $this->vendorPath . $stubName;
     }
 }
