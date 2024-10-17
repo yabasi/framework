@@ -20,7 +20,7 @@ class Connection
         $this->logger = $logger;
     }
 
-    public function getPdo(): PDO
+    public function getPdo(): ?PDO
     {
         if ($this->pdo === null) {
             $this->pdo = $this->createConnection();
@@ -29,8 +29,14 @@ class Connection
         return $this->pdo;
     }
 
-    protected function createConnection(): PDO
+    protected function createConnection(): ?PDO
     {
+        $database = $this->config['database'] ?? '';
+        if (empty($database)) {
+            $this->logger->warning("Database name is empty. Skipping database connection.");
+            return null;
+        }
+
         $dsn = $this->getDsn();
         $username = $this->config['username'] ?? '';
         $password = $this->config['password'] ?? '';
@@ -62,8 +68,11 @@ class Connection
         );
     }
 
-    public function query(): QueryBuilder
+    public function query(): ?QueryBuilder
     {
+        if ($this->getPdo() === null) {
+            return null;
+        }
         return new QueryBuilder($this, $this->logger);
     }
 
