@@ -8,6 +8,7 @@ use Yabasi\Database\Connection;
 use Yabasi\Database\Model;
 use Yabasi\Logging\Logger;
 use Yabasi\Providers\ConfigServiceProvider;
+use Yabasi\Session\SecurityHandler;
 use Yabasi\Session\SessionManager;
 
 class Bootstrap
@@ -43,7 +44,10 @@ class Bootstrap
 
     private function startSession(): void
     {
-        $sessionManager = $this->container->get(SessionManager::class);
+        $config = $this->container->get('config');
+        $securityHandler = new SecurityHandler();
+        $sessionManager = new SessionManager($config, $securityHandler);
+        $this->container->singleton(SessionManager::class, $sessionManager);
         $sessionManager->start();
     }
 

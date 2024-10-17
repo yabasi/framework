@@ -6,11 +6,16 @@ class FileSessionHandler implements SessionHandlerInterface
 {
     private $savePath;
 
-    public function open($save_path, $name): bool
+    public function __construct($savePath = null)
     {
-        $this->savePath = $save_path;
+        $this->savePath = $savePath ?: sys_get_temp_dir();
+    }
+
+    public function open($savePath, $sessionName): bool
+    {
+        $this->savePath = $savePath ?: $this->savePath;
         if (!is_dir($this->savePath)) {
-            mkdir($this->savePath, 0777);
+            mkdir($this->savePath, 0777, true);
         }
         return true;
     }
@@ -27,7 +32,7 @@ class FileSessionHandler implements SessionHandlerInterface
 
     public function write($id, $data): bool
     {
-        return file_put_contents("$this->savePath/sess_$id", $data) === false ? false : true;
+        return file_put_contents("$this->savePath/sess_$id", $data) !== false;
     }
 
     public function destroy($id): bool
@@ -39,10 +44,10 @@ class FileSessionHandler implements SessionHandlerInterface
         return true;
     }
 
-    public function gc($max_lifetime): int|false
+    public function gc($maxlifetime): int|false
     {
         foreach (glob("$this->savePath/sess_*") as $file) {
-            if (filemtime($file) + $max_lifetime < time() && file_exists($file)) {
+            if (filemtime($file) + $maxlifetime < time() && file_exists($file)) {
                 unlink($file);
             }
         }

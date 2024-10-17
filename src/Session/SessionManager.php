@@ -27,7 +27,12 @@ class SessionManager
             return;
         }
 
-        ini_set('session.gc_maxlifetime', $sessionConfig['lifetime'] ?? 1440);
+        $lifetime = $sessionConfig['lifetime'] ?? 120;
+        $path = $sessionConfig['path'] ?? '/tmp';
+
+        ini_set('session.gc_maxlifetime', $lifetime * 60);
+        ini_set('session.save_path', $path);
+
         SecurityHandler::setSecureCookieParams();
         $this->setSessionHandler($sessionConfig['driver'] ?? 'file');
     }
@@ -99,7 +104,7 @@ class SessionManager
 
         $this->sessionHandler = match ($driver) {
             'database' => new DatabaseSessionHandler($this->config->get('database')),
-            default => new FileSessionHandler(),
+            default => new FileSessionHandler($this->config->get('session.path', '/tmp')),
         };
 
         session_set_save_handler($this->sessionHandler, true);
