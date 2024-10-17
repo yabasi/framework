@@ -65,7 +65,8 @@ class Blueprint
 
     public function timestamp(string $column): self
     {
-        return $this->addColumn('timestamp', $column, ['nullable' => true]);
+        $this->addColumn('timestamp', $column);
+        return $this;
     }
 
     public function timestamps()
