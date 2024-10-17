@@ -48,7 +48,7 @@ class Connection
             return $pdo;
         } catch (\PDOException $e) {
             $this->logger->error("Database connection failed: " . $e->getMessage());
-            throw new \RuntimeException("Could not connect to the database. Please check your configuration.");
+            return null;
         }
     }
 

@@ -70,7 +70,6 @@ class Translator
     {
         $path = $this->config->get('paths.lang') . '/' . $locale . '.json';
         if (!file_exists($path)) {
-            error_log("Translation file not found: $path");
             return;
         }
 
