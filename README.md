@@ -33,7 +33,6 @@ To create a new Yabasi project:
 ```bash
 composer create-project yabasi/yabasi myproject
 cd myproject
-php yabasi serve
 ```
 
 These commands will create a new Yabasi project and start the built-in development server.
