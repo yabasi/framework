@@ -15,6 +15,10 @@ class Schema
 
     public function hasTable(string $table): bool
     {
+        if ($this->connection->getPdo() === null) {
+            return false;
+        }
+
         $sql = "SHOW TABLES LIKE :table";
         $statement = $this->connection->getPdo()->prepare($sql);
         $statement->execute(['table' => $table]);

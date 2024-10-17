@@ -78,6 +78,9 @@ class Connection
 
     public function schema()
     {
+        if ($this->getPdo() === null) {
+            return null;
+        }
         return new Schema($this);
     }
 

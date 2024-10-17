@@ -18,11 +18,17 @@ class Migrator
         $this->connection = $connection;
         $this->filesystem = $filesystem;
         $this->migrationPath = $migrationPath ?? BASE_PATH . '/app/Migrations';
-        $this->createMigrationsTable();
+        if ($this->connection->getPdo() !== null) {
+            $this->createMigrationsTable();
+        }
     }
 
     protected function createMigrationsTable(): void
     {
+        if ($this->connection->getPdo() === null) {
+            return;
+        }
+
         $schema = $this->connection->schema();
         if (!$schema->hasTable($this->table)) {
             $schema->create($this->table, function ($table) {
