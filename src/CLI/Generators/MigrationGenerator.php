@@ -5,13 +5,41 @@ namespace Yabasi\CLI\Generators;
 use Yabasi\Filesystem\Filesystem;
 use Yabasi\Support\Str;
 
+/**
+ * MigrationGenerator class for generating migration files.
+ *
+ * This class is responsible for creating new database migration files
+ * based on user input and predefined stubs.
+ */
 class MigrationGenerator
 {
+    /**
+     * @var Filesystem The filesystem instance for file operations
+     */
     protected Filesystem $filesystem;
+
+    /**
+     * @var string The path to the migrations directory
+     */
     protected string $migrationPath;
+
+    /**
+     * @var string The path to the vendor directory containing stubs
+     */
     protected string $vendorPath;
+
+    /**
+     * @var string The namespace for migration classes
+     */
     protected string $namespace = 'Yabasi\\Migrations';
 
+    /**
+     * MigrationGenerator constructor.
+     *
+     * @param Filesystem $filesystem The filesystem instance
+     * @param string $vendorPath The path to the vendor directory
+     * @param string|null $migrationPath The path to the migrations directory (optional)
+     */
     public function __construct(Filesystem $filesystem, string $vendorPath, string $migrationPath = null)
     {
         $this->filesystem = $filesystem;
@@ -19,6 +47,14 @@ class MigrationGenerator
         $this->migrationPath = $migrationPath ?? BASE_PATH . '/app/Migrations';
     }
 
+    /**
+     * Generate a new migration file.
+     *
+     * @param string $name The name of the migration
+     * @param string $type The type of migration (default, create, update, delete)
+     * @return string The path of the generated migration file
+     * @throws \RuntimeException If the migration already exists
+     */
     public function generate(string $name, string $type = 'default'): string
     {
         $className = $this->getClassName($name);
@@ -38,17 +74,35 @@ class MigrationGenerator
         return $path;
     }
 
+    /**
+     * Get the table name from the migration name.
+     *
+     * @param string $name The migration name
+     * @return string The derived table name
+     */
     protected function getTableName(string $name): string
     {
         return Str::snake(Str::pluralStudly($name));
     }
 
+    /**
+     * Get the class name for the migration.
+     *
+     * @param string $name The migration name
+     * @return string The full class name for the migration
+     */
     protected function getClassName(string $name): string
     {
         $timestamp = date('YmdHis');
         return Str::studly($name) . 'Migration' . $timestamp;
     }
 
+    /**
+     * Get the file name for the migration.
+     *
+     * @param string $name The migration name
+     * @return string The file name for the migration
+     */
     protected function getFileName(string $name): string
     {
         $timestamp = date('YmdHis');
@@ -56,6 +110,13 @@ class MigrationGenerator
         return "{$baseName}Migration{$timestamp}.php";
     }
 
+    /**
+     * Get the appropriate stub content for the migration.
+     *
+     * @param string $type The type of migration
+     * @return string The content of the stub file
+     * @throws \RuntimeException If the stub file is not found
+     */
     protected function getStub(string $type): string
     {
         $stubPath = $this->getStubPath("migration.{$type}.stub");
@@ -71,6 +132,14 @@ class MigrationGenerator
         return file_get_contents($stubPath);
     }
 
+    /**
+     * Populate the stub with actual values.
+     *
+     * @param string $stub The stub content
+     * @param string $className The name of the migration class
+     * @param string $tableName The name of the database table
+     * @return string The populated stub content
+     */
     protected function populateStub(string $stub, string $className, string $tableName): string
     {
         $replacements = [
@@ -82,6 +151,12 @@ class MigrationGenerator
         return str_replace(array_keys($replacements), array_values($replacements), $stub);
     }
 
+    /**
+     * Get the full path to a stub file.
+     *
+     * @param string $stubName The name of the stub file
+     * @return string The full path to the stub file
+     */
     protected function getStubPath(string $stubName): string
     {
         return $this->vendorPath . $stubName;
