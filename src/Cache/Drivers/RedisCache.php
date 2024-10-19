@@ -6,22 +6,40 @@ use Predis\Client as RedisClient;
 use Yabasi\Cache\CacheInterface;
 use Yabasi\Config\Config;
 
+/**
+ * RedisCache class implements Redis-based caching mechanism.
+ *
+ * This class provides a Redis-based implementation of the CacheInterface,
+ * using the Predis library to interact with a Redis server for caching operations.
+ */
 class RedisCache implements CacheInterface
 {
+    /** @var RedisClient The Redis client instance */
     protected RedisClient $redis;
 
+    /**
+     * RedisCache constructor.
+     *
+     * @param Config|null $config Configuration object, used to set Redis connection details
+     */
     public function __construct(?Config $config = null)
     {
         $redisConfig = $config ? $config->get('redis.default', []) : [];
         $this->redis = new RedisClient($redisConfig);
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function get(string $key, $default = null)
     {
         $value = $this->redis->get($key);
         return $value !== null ? unserialize($value) : $default;
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function set(string $key, $value, ?int $ttl = null): bool
     {
         $value = serialize($value);
@@ -31,21 +49,33 @@ class RedisCache implements CacheInterface
         return $this->redis->set($key, $value) === 'OK';
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function delete(string $key): bool
     {
         return $this->redis->del($key) > 0;
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function clear(): bool
     {
         return $this->redis->flushdb() === 'OK';
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function has(string $key): bool
     {
         return $this->redis->exists($key) > 0;
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function many(array $keys): array
     {
         $values = $this->redis->mget($keys);
@@ -54,6 +84,9 @@ class RedisCache implements CacheInterface
         }, array_combine($keys, $values));
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function setMany(array $values, ?int $ttl = null): bool
     {
         $serialized = [];
@@ -73,17 +106,26 @@ class RedisCache implements CacheInterface
         return $this->redis->mset($serialized) === 'OK';
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function deleteMany(array $keys): bool
     {
         return $this->redis->del($keys) > 0;
     }
 
-    public function increment(string $key, $value = 1)
+    /**
+     * {@inheritdoc}
+     */
+    public function increment(string $key, $value = 1): bool|int
     {
         return $this->redis->incrby($key, $value);
     }
 
-    public function decrement(string $key, $value = 1)
+    /**
+     * {@inheritdoc}
+     */
+    public function decrement(string $key, $value = 1): bool|int
     {
         return $this->redis->decrby($key, $value);
     }
