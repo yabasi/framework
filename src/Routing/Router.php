@@ -5,6 +5,7 @@ namespace Yabasi\Routing;
 use Closure;
 use Exception;
 use Yabasi\Container\Container;
+use Yabasi\Exceptions\RouteNotFoundException;
 use Yabasi\Http\FormRequest;
 use Yabasi\Http\Request;
 use Yabasi\Http\Response;
@@ -110,7 +111,7 @@ class Router
         $route = $this->findRoute($request);
 
         if (!$route) {
-            throw new Exception("Route not found", 404);
+            throw new RouteNotFoundException("No route found for " . $request->getUri());
         }
 
         $middlewares = $this->resolveMiddleware($route['middleware'] ?? []);

@@ -33,7 +33,6 @@ class Connection
     {
         $database = $this->config['database'] ?? '';
         if (empty($database)) {
-            $this->logger->warning("Database name is empty. Skipping database connection.");
             return null;
         }
 

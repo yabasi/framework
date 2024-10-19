@@ -23,6 +23,9 @@ class Container
         if (is_null($concrete)) {
             $concrete = $abstract;
         }
+        if (!is_string($abstract)) {
+            throw new Exception("The abstract must be a string.");
+        }
         $this->bindings[$abstract] = compact('concrete', 'shared');
     }
 
@@ -31,6 +34,10 @@ class Container
      */
     public function make($abstract)
     {
+        if (!is_string($abstract)) {
+            throw new Exception("The abstract must be a string. Given: " . gettype($abstract) . " - " . var_export($abstract, true));
+        }
+
         if (isset($this->instances[$abstract])) {
             return $this->instances[$abstract];
         }
@@ -60,11 +67,23 @@ class Container
      */
     public function get($abstract)
     {
+        if ($abstract instanceof Closure) {
+            return $abstract($this);
+        }
+
+        if (!is_string($abstract)) {
+            throw new Exception("The abstract must be a string or Closure. Given: " . gettype($abstract));
+        }
+
         try {
             return $this->make($abstract);
         } catch (Exception $e) {
             if (isset($this->bindings[$abstract])) {
-                return $this->make($this->bindings[$abstract]['concrete']);
+                $concrete = $this->bindings[$abstract]['concrete'];
+                if ($concrete instanceof Closure) {
+                    return $concrete($this);
+                }
+                return $this->make($concrete);
             }
 
             if ($abstract === 'config') {
