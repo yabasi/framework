@@ -68,7 +68,7 @@ class MigrateCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         if ($this->migrator->getConnection()->getPdo() === null) {
-            $output->writeln('<error>Database connection is not available. Skipping migrations.</error>');
+            $output->writeln('<error>Database connection is not available. Please check your configuration.</error>');
             return Command::FAILURE;
         }
 

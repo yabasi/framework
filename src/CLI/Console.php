@@ -85,7 +85,13 @@ class Console
      */
     public function run(array $argv): int
     {
-        return $this->console->run();
+        try {
+            return $this->console->run();
+        } catch (\Exception $e) {
+            echo "An error occurred: " . $e->getMessage() . "\n";
+            echo "If this problem persists, please check your configuration or contact support.\n";
+            return 1;
+        }
     }
 
     /**

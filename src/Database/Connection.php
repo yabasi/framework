@@ -5,6 +5,7 @@ namespace Yabasi\Database;
 use PDO;
 use Yabasi\Config\Config;
 use Yabasi\Database\Schema\Schema;
+use Yabasi\Exceptions\DatabaseConnectionException;
 use Yabasi\Logging\Logger;
 
 class Connection
@@ -47,7 +48,7 @@ class Connection
             return $pdo;
         } catch (\PDOException $e) {
             $this->logger->error("Database connection failed: " . $e->getMessage());
-            return null;
+            throw new DatabaseConnectionException("Could not connect to the database. Please check your configuration.");
         }
     }
 

@@ -23,6 +23,11 @@ class Migrator
         }
     }
 
+    public function getConnection(): ?Connection
+    {
+        return $this->connection;
+    }
+
     protected function createMigrationsTable(): void
     {
         if ($this->connection->getPdo() === null) {
