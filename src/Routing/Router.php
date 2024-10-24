@@ -233,27 +233,42 @@ class Router
             $response = new Response();
             $response->setContent($result);
             return $response;
-        } elseif (is_callable($handler)) {
-            return $handler($request);
+        } elseif ($handler instanceof \Closure) {
+            $parameters = $this->getRouteParameters($route['uri'], $request->getUri());
+            $result = call_user_func_array($handler, array_values($parameters));
+
+            if ($result instanceof Response) {
+                return $result;
+            }
+
+            $response = new Response();
+            $response->setContent($result);
+            return $response;
         }
 
         throw new \Exception("Invalid route handler");
     }
 
-    protected function getRouteParameter($routeUri, $requestUri, $paramName)
+    protected function getRouteParameters(string $routeUri, string $requestUri): array
     {
         $routeParts = explode('/', trim($routeUri, '/'));
         $requestParts = explode('/', trim($requestUri, '/'));
+        $parameters = [];
 
         foreach ($routeParts as $index => $part) {
             if (preg_match('/^{(.+)}$/', $part, $matches)) {
-                if ($matches[1] === $paramName) {
-                    return $requestParts[$index] ?? null;
-                }
+                $paramName = $matches[1];
+                $parameters[$paramName] = $requestParts[$index] ?? null;
             }
         }
 
-        return null;
+        return $parameters;
+    }
+
+    protected function getRouteParameter($routeUri, $requestUri, $paramName)
+    {
+        $parameters = $this->getRouteParameters($routeUri, $requestUri);
+        return $parameters[$paramName] ?? null;
     }
 
     public function getRoutes(): array
