@@ -6,6 +6,7 @@ use Exception;
 use Symfony\Component\Console\Application as SymfonyConsole;
 use Yabasi\CLI\Commands\DatabaseDumpCommand;
 use Yabasi\CLI\Commands\DatabaseRestoreCommand;
+use Yabasi\CLI\Commands\KeyGenerateCommand;
 use Yabasi\CLI\Commands\MakeControllerCommand;
 use Yabasi\CLI\Commands\MakeMiddlewareCommand;
 use Yabasi\CLI\Commands\MakeMigrationCommand;
@@ -75,6 +76,7 @@ class Console
 
         $this->console->add($this->container->make(DatabaseDumpCommand::class));
         $this->console->add($this->container->make(DatabaseRestoreCommand::class));
+        $this->console->add($this->container->make(KeyGenerateCommand::class));
     }
 
     /**
