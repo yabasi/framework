@@ -109,16 +109,16 @@ class FormValidator
         return filter_var($value, FILTER_VALIDATE_EMAIL) !== false;
     }
 
-    protected function validateMin($field, $value, $params): bool
+    protected function validateMin($attribute, $value, $parameters): bool
     {
-        $min = $params[0];
-        return strlen($value) >= $min;
+        $length = is_numeric($value) ? $value : mb_strlen((string)$value ?? '');
+        return $length >= $parameters[0];
     }
 
-    protected function validateMax($field, $value, $params): bool
+    protected function validateMax($attribute, $value, $parameters): bool
     {
-        $max = $params[0];
-        return strlen($value) <= $max;
+        $length = is_numeric($value) ? $value : mb_strlen((string)$value ?? '');
+        return $length <= $parameters[0];
     }
 
     protected function validateNumeric($field, $value): bool
