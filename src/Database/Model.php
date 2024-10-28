@@ -153,7 +153,6 @@ abstract class Model
         return new BelongsTo($relatedModel::query(), $this, $foreignKey, $ownerKey);
     }
 
-    // Öznitelik işlemleri
     public function fill(array $attributes): self
     {
         foreach ($attributes as $key => $value) {
@@ -165,7 +164,6 @@ abstract class Model
     public function setAttribute($key, $value): self
     {
         $this->attributes[$key] = $value;
-        $this->changes[$key] = $value;
         return $this;
     }
 
@@ -174,18 +172,21 @@ abstract class Model
         return $this->attributes[$key] ?? null;
     }
 
-    // Sihirli metodlar
-
     /**
      * @throws Exception
      */
     public function __get($key)
     {
+        if (array_key_exists($key, $this->attributes)) {
+            return $this->attributes[$key];
+        }
+
         $method = 'get' . ucfirst($key);
         if (method_exists($this, $method)) {
             return $this->$method();
         }
-        return $this->getAttribute($key);
+
+        return null;
     }
 
     public function __set($key, $value)
@@ -198,7 +199,6 @@ abstract class Model
         }
     }
 
-    // İlişki işlemleri
     public function setRelation($relation, $value): static
     {
         $this->relations[$relation] = $value;

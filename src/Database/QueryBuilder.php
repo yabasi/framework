@@ -438,8 +438,11 @@ class QueryBuilder
         }
 
         return array_map(function ($item) {
-            $modelClass = get_class($this->model);
-            return new $modelClass($item);
+            if ($this->model instanceof Model) {
+                $model = clone $this->model;
+                return $model->fill($item);
+            }
+            return $item;
         }, $results);
     }
 

@@ -5,6 +5,7 @@ namespace Yabasi\Support;
 use ArrayAccess;
 use Countable;
 use IteratorAggregate;
+use Yabasi\Database\Model;
 
 class Collection implements ArrayAccess, Countable, IteratorAggregate
 {
@@ -126,7 +127,9 @@ class Collection implements ArrayAccess, Countable, IteratorAggregate
 
     public function toArray(): array
     {
-        return $this->items;
+        return array_map(function ($item) {
+            return $item instanceof Model ? $item->getAttributes() : $item;
+        }, $this->items);
     }
 
     public function map(callable $callback): self
