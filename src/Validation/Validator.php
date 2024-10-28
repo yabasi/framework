@@ -186,21 +186,44 @@ class Validator
     protected function registerBaseRules(): void
     {
         $this->addRule('required', function ($attribute, $value) {
-            return $value !== null && $value !== '';
+            if (is_null($value)) {
+                return false;
+            }
+
+            if (is_string($value)) {
+                return strlen(trim($value)) > 0;
+            }
+
+            if (is_array($value)) {
+                return count($value) > 0;
+            }
+
+            return true;
         });
 
         $this->addRule('email', function ($attribute, $value) {
+            if (empty($value)) {
+                return false;
+            }
             return filter_var($value, FILTER_VALIDATE_EMAIL) !== false;
         });
 
         $this->addRule('min', function ($attribute, $value, $parameters) {
-            $length = is_numeric($value) ? $value : mb_strlen($value);
-            return $length >= $parameters[0];
+            if ($value === null) {
+                return false;
+            }
+
+            $value = (string)$value;
+            return mb_strlen($value) >= (int)$parameters[0];
         });
 
         $this->addRule('max', function ($attribute, $value, $parameters) {
-            $length = is_numeric($value) ? $value : mb_strlen($value);
-            return $length <= $parameters[0];
+            if ($value === null) {
+                return false;
+            }
+
+            $value = (string)$value;
+            return mb_strlen($value) <= (int)$parameters[0];
         });
 
         $this->addRule('between', function ($attribute, $value, $parameters) {
@@ -209,6 +232,9 @@ class Validator
         });
 
         $this->addRule('numeric', function ($attribute, $value) {
+            if ($value === null) {
+                return false;
+            }
             return is_numeric($value);
         });
 
@@ -217,7 +243,7 @@ class Validator
         });
 
         $this->addRule('string', function ($attribute, $value) {
-            return is_string($value);
+            return is_null($value) || is_string($value);
         });
 
         $this->addRule('array', function ($attribute, $value) {
@@ -238,7 +264,11 @@ class Validator
         });
 
         $this->addRule('same', function ($attribute, $value, $parameters) {
-            return $value === $this->getValue($parameters[0]);
+            $otherField = $parameters[0] ?? null;
+            if (!$otherField) {
+                return false;
+            }
+            return isset($this->data[$otherField]) && $value === $this->data[$otherField];
         });
 
         $this->addRule('different', function ($attribute, $value, $parameters) {
@@ -258,6 +288,15 @@ class Validator
         });
 
         $this->addRule('unique', function ($attribute, $value, $parameters) {
+
+            if (empty($value)) {
+                return true;
+            }
+
+            if (empty($parameters[0])) {
+                throw new \InvalidArgumentException("Table name must be specified for unique rule.");
+            }
+
             $table = $parameters[0];
             $column = $parameters[1] ?? $attribute;
             $except = $parameters[2] ?? null;
