@@ -25,7 +25,7 @@ class MiddlewareManager
 
     protected function loadMiddlewareConfig(): void
     {
-        $middlewareConfig = $this->config->get('middleware', []);
+        $middlewareConfig = require BASE_PATH . '/config/middleware.php';
 
         $this->globalMiddleware = $middlewareConfig['global'] ?? [];
         $this->middlewareAliases = $middlewareConfig['route'] ?? [];
@@ -35,20 +35,32 @@ class MiddlewareManager
     public function resolveMiddleware($middleware): array
     {
         if (is_string($middleware)) {
-            return $this->resolveMiddlewareAlias($middleware);
+            return $this->resolveMiddlewareClass($middleware);
+        }
+
+        if (is_array($middleware)) {
+            $resolved = [];
+            foreach ($middleware as $m) {
+                $resolved = array_merge($resolved, $this->resolveMiddleware($m));
+            }
+            return $resolved;
         }
 
         return [$middleware];
     }
 
-    protected function resolveMiddlewareAlias(string $name): array
+    protected function resolveMiddlewareClass(string $name): array
     {
         if (isset($this->middlewareAliases[$name])) {
             return [$this->middlewareAliases[$name]];
         }
 
         if (isset($this->middlewareGroups[$name])) {
-            return $this->middlewareGroups[$name];
+            $resolved = [];
+            foreach ($this->middlewareGroups[$name] as $groupMiddleware) {
+                $resolved = array_merge($resolved, $this->resolveMiddleware($groupMiddleware));
+            }
+            return $resolved;
         }
 
         return [$name];
@@ -69,15 +81,7 @@ class MiddlewareManager
             $target
         );
 
-        $result = $pipeline($request);
-
-        if (!$result instanceof Response) {
-            $response = new Response();
-            $response->setContent($result);
-            return $response;
-        }
-
-        return $result;
+        return $pipeline($request);
     }
 
     protected function carry(): Closure

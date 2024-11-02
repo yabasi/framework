@@ -4,7 +4,9 @@ namespace Yabasi\Routing;
 
 use Closure;
 use Exception;
+use ReflectionMethod;
 use Yabasi\Container\Container;
+use Yabasi\Controller\Controller;
 use Yabasi\Exceptions\RouteNotFoundException;
 use Yabasi\Http\FormRequest;
 use Yabasi\Http\Request;
@@ -114,15 +116,53 @@ class Router
             throw new RouteNotFoundException("No route found for " . $request->getUri());
         }
 
-        $middlewares = $this->resolveMiddleware($route['middleware'] ?? []);
+        // Collect all middleware
+        $middlewares = $this->resolveRouteMiddleware($route, $request);
 
         if (str_starts_with($route['uri'], $this->apiPrefix . '/' . $this->version)) {
-            array_unshift($middlewares, ApiMiddleware::class);
+            array_unshift($middlewares, 'api');
         }
 
         return $this->runMiddlewareChain($request, $middlewares, function ($request) use ($route) {
             return $this->handleRoute($route, $request);
         });
+    }
+
+    /**
+     * Resolve all middleware for the route including controller middleware
+     */
+    protected function resolveRouteMiddleware(array $route, Request $request): array
+    {
+        $middlewares = [];
+
+        if (!empty($route['middleware'])) {
+            foreach ((array)$route['middleware'] as $middleware) {
+                $middlewares = array_merge(
+                    $middlewares,
+                    $this->middlewareManager->resolveMiddleware($middleware)
+                );
+            }
+        }
+
+        if (is_string($route['handler']) && str_contains($route['handler'], '@')) {
+            [$controller, $method] = explode('@', $route['handler']);
+            $controllerClass = "Yabasi\\Controllers\\{$controller}";
+
+            if (class_exists($controllerClass)) {
+                $controllerInstance = $this->container->make($controllerClass);
+                if ($controllerInstance instanceof Controller) {
+                    $controllerMiddlewares = $controllerInstance->getMiddlewareForMethod($method);
+                    foreach ($controllerMiddlewares as $middleware) {
+                        $middlewares = array_merge(
+                            $middlewares,
+                            $this->middlewareManager->resolveMiddleware($middleware)
+                        );
+                    }
+                }
+            }
+        }
+
+        return array_unique($middlewares);
     }
 
     public function resource($name, $controller, $middleware = []): void
@@ -145,9 +185,9 @@ class Router
         return $resolvedMiddleware;
     }
 
-    protected function runMiddlewareChain(Request $request, array $middlewares, callable $target): Response
+    protected function runMiddlewareChain(Request $request, array $middlewares, callable $destination): Response
     {
-        return $this->middlewareManager->runMiddleware($request, $middlewares, $target);
+        return $this->middlewareManager->runMiddleware($request, $middlewares, $destination);
     }
 
     protected function findRoute(Request $request): ?array
@@ -200,12 +240,12 @@ class Router
         $handler = $route['handler'];
 
         if (is_string($handler)) {
-            list($controller, $action) = explode('@', $handler);
+            [$controller, $action] = explode('@', $handler);
             $controllerClass = "Yabasi\\Controllers\\{$controller}";
 
             $controllerInstance = $this->container->make($controllerClass);
 
-            $reflectionMethod = new \ReflectionMethod($controllerInstance, $action);
+            $reflectionMethod = new ReflectionMethod($controllerInstance, $action);
             $parameters = $reflectionMethod->getParameters();
 
             $args = [];
@@ -233,9 +273,10 @@ class Router
             $response = new Response();
             $response->setContent($result);
             return $response;
-        } elseif ($handler instanceof \Closure) {
-            $parameters = $this->getRouteParameters($route['uri'], $request->getUri());
-            $result = call_user_func_array($handler, array_values($parameters));
+        }
+
+        if ($handler instanceof Closure) {
+            $result = $handler($request);
 
             if ($result instanceof Response) {
                 return $result;
@@ -246,7 +287,7 @@ class Router
             return $response;
         }
 
-        throw new \Exception("Invalid route handler");
+        throw new Exception("Invalid route handler");
     }
 
     protected function getRouteParameters(string $routeUri, string $requestUri): array
