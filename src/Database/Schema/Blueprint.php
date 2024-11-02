@@ -65,14 +65,17 @@ class Blueprint
 
     public function timestamp(string $column): self
     {
-        $this->addColumn('timestamp', $column);
+        $this->addColumn($column, 'timestamp', [
+            'nullable' => true,
+            'default' => null
+        ]);
         return $this;
     }
 
-    public function timestamps()
+    public function timestamps(): self
     {
-        $this->addColumn('created_at', 'timestamp');
-        $this->addColumn('updated_at', 'timestamp');
+        $this->timestamp('created_at')->nullable();
+        $this->timestamp('updated_at')->nullable();
         return $this;
     }
 
@@ -143,9 +146,12 @@ class Blueprint
         return $foreignKey;
     }
 
-    protected function addColumn(string $name, string $type, array $options = [])
+    protected function addColumn(string $name, string $type, array $options = []): void
     {
-        $this->columns[] = array_merge(['name' => $name, 'type' => $type], $options);
+        $this->columns[] = array_merge([
+            'name' => $name,
+            'type' => $type
+        ], $options);
     }
 
     protected function addIndex(string $type, string $column): void

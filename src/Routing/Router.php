@@ -222,7 +222,10 @@ class Router
         }
 
         foreach ($routeParts as $index => $routePart) {
-            if ($routePart !== $requestParts[$index] && !preg_match('/^{.+}$/', $routePart)) {
+            if (preg_match('/^{.+}$/', $routePart)) {
+                continue;
+            }
+            if ($routePart !== $requestParts[$index]) {
                 return false;
             }
         }
@@ -245,22 +248,19 @@ class Router
 
             $controllerInstance = $this->container->make($controllerClass);
 
-            $reflectionMethod = new ReflectionMethod($controllerInstance, $action);
-            $parameters = $reflectionMethod->getParameters();
+            $parameters = $this->getRouteParameters($route['uri'], $request->getUri());
+
+            $reflectionMethod = new \ReflectionMethod($controllerInstance, $action);
+            $methodParams = $reflectionMethod->getParameters();
 
             $args = [];
-            foreach ($parameters as $parameter) {
-                $parameterType = $parameter->getType();
-                if ($parameterType) {
-                    $typeName = $parameterType->getName();
-                    if ($typeName === Request::class) {
-                        $args[] = $request;
-                    } elseif (is_subclass_of($typeName, FormRequest::class)) {
-                        $formRequest = $this->container->make($typeName, ['request' => $request]);
-                        $args[] = $formRequest;
-                    }
-                } elseif ($parameter->getName() === 'id') {
-                    $args[] = $this->getRouteParameter($route['uri'], $request->getUri(), 'id');
+            foreach ($methodParams as $param) {
+                if ($param->getType() && $param->getType()->getName() === Request::class) {
+                    $args[] = $request;
+                } elseif (isset($parameters[$param->getName()])) {
+                    $args[] = $parameters[$param->getName()];
+                } else {
+                    $args[] = $param->isDefaultValueAvailable() ? $param->getDefaultValue() : null;
                 }
             }
 
@@ -306,10 +306,21 @@ class Router
         return $parameters;
     }
 
-    protected function getRouteParameter($routeUri, $requestUri, $paramName)
+    protected function getRouteParameter(string $routeUri, string $requestUri, string $paramName): ?string
     {
-        $parameters = $this->getRouteParameters($routeUri, $requestUri);
-        return $parameters[$paramName] ?? null;
+        $routeParts = explode('/', trim($routeUri, '/'));
+        $requestParts = explode('/', trim($requestUri, '/'));
+
+        foreach ($routeParts as $index => $part) {
+            if (preg_match('/^{(.+)}$/', $part, $matches)) {
+                $currentParamName = $matches[1];
+                if ($currentParamName === $paramName && isset($requestParts[$index])) {
+                    return $requestParts[$index];
+                }
+            }
+        }
+
+        return null;
     }
 
     public function getRoutes(): array

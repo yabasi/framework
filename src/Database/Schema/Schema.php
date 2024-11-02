@@ -25,37 +25,11 @@ class Schema
         return $statement->rowCount() > 0;
     }
 
-    public function create(string $table, \Closure $callback)
+    public function create(string $table, \Closure $callback): void
     {
         $blueprint = new Blueprint($table);
         $callback($blueprint);
 
-        $sql = $this->toSql($blueprint);
-        $this->connection->getPdo()->exec($sql);
-    }
-
-    public function table(string $table, \Closure $callback): void
-    {
-        $blueprint = new Blueprint($table);
-        $callback($blueprint);
-
-        $this->build($blueprint);
-    }
-
-    public function drop(string $table): void
-    {
-        $sql = "DROP TABLE IF EXISTS `{$table}`";
-        $this->connection->getPdo()->exec($sql);
-    }
-
-    public function dropIfExists(string $table)
-    {
-        $sql = "DROP TABLE IF EXISTS `{$table}`";
-        $this->connection->getPdo()->exec($sql);
-    }
-
-    protected function build(Blueprint $blueprint): void
-    {
         $sql = $this->toSql($blueprint);
         $this->connection->getPdo()->exec($sql);
     }
@@ -70,34 +44,23 @@ class Schema
             $columnDefinitions[] = $this->getColumnDefinition($column);
         }
 
-        $columnsSql = implode(", ", $columnDefinitions);
-
-        return "CREATE TABLE `{$table}` ({$columnsSql})";
-    }
-
-    protected function getPrimaryKeyDefinition(Blueprint $blueprint): ?string
-    {
-        $primaryKey = $blueprint->getPrimaryKey();
-        if ($primaryKey) {
-            return "PRIMARY KEY (`{$primaryKey}`)";
-        }
-        return null;
+        return sprintf(
+            "CREATE TABLE IF NOT EXISTS `%s` (%s) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
+            $table,
+            implode(", ", $columnDefinitions)
+        );
     }
 
     protected function getColumnDefinition(array $column): string
     {
-        $sql = "`{$column['name']}` {$column['type']}";
+        $sql = "`{$column['name']}` " . $this->getColumnType($column);
 
-        if (isset($column['length'])) {
+        if (isset($column['length']) && !in_array($column['type'], ['text', 'mediumtext', 'longtext'])) {
             $sql .= "({$column['length']})";
         }
 
         if (isset($column['unsigned']) && $column['unsigned']) {
             $sql .= " UNSIGNED";
-        }
-
-        if (isset($column['autoIncrement']) && $column['autoIncrement']) {
-            $sql .= " AUTO_INCREMENT PRIMARY KEY";
         }
 
         if (isset($column['nullable']) && $column['nullable']) {
@@ -106,30 +69,85 @@ class Schema
             $sql .= " NOT NULL";
         }
 
+        if (isset($column['autoIncrement']) && $column['autoIncrement']) {
+            $sql .= " AUTO_INCREMENT";
+        }
+
         if (isset($column['default'])) {
-            $sql .= " DEFAULT '{$column['default']}'";
+            $sql .= " DEFAULT " . $this->getDefaultValue($column['default']);
+        } elseif (isset($column['nullable']) && $column['nullable']) {
+            $sql .= " DEFAULT NULL";
+        }
+
+        if (isset($column['primary']) && $column['primary']) {
+            $sql .= " PRIMARY KEY";
         }
 
         return $sql;
     }
 
-    protected function getColumnType(string $type): string
+    protected function getColumnType(array $column): string
     {
-        $typeMap = [
+        return match ($column['type']) {
             'id' => 'BIGINT',
-            'bigInteger' => 'BIGINT',
-            'integer' => 'INT',
             'string' => 'VARCHAR',
             'text' => 'TEXT',
+            'integer' => 'INT',
+            'bigInteger' => 'BIGINT',
             'boolean' => 'TINYINT(1)',
             'date' => 'DATE',
             'dateTime' => 'DATETIME',
             'timestamp' => 'TIMESTAMP',
-            'decimal' => 'DECIMAL',
+            'time' => 'TIME',
             'float' => 'FLOAT',
+            'decimal' => 'DECIMAL',
             'json' => 'JSON',
-        ];
+            default => 'VARCHAR',
+        };
+    }
 
-        return $typeMap[$type] ?? 'VARCHAR';
+    protected function getDefaultValue($value): string
+    {
+        if (is_null($value)) {
+            return 'NULL';
+        }
+
+        if (is_bool($value)) {
+            return $value ? '1' : '0';
+        }
+
+        if (is_int($value) || is_float($value)) {
+            return (string)$value;
+        }
+
+        if ($value === 'CURRENT_TIMESTAMP') {
+            return $value;
+        }
+
+        return "'" . addslashes($value) . "'";
+    }
+
+    public function table(string $table, \Closure $callback): void
+    {
+        $blueprint = new Blueprint($table);
+        $callback($blueprint);
+        $this->build($blueprint);
+    }
+
+    protected function build(Blueprint $blueprint): void
+    {
+        $sql = $this->toSql($blueprint);
+        $this->connection->getPdo()->exec($sql);
+    }
+
+    public function drop(string $table): void
+    {
+        $sql = "DROP TABLE IF EXISTS `{$table}`";
+        $this->connection->getPdo()->exec($sql);
+    }
+
+    public function dropIfExists(string $table): void
+    {
+        $this->drop($table);
     }
 }

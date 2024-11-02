@@ -36,12 +36,14 @@ class Migrator
 
         $schema = $this->connection->schema();
         if (!$schema->hasTable($this->table)) {
-            $schema->create($this->table, function ($table) {
-                $table->id();
-                $table->string('migration');
-                $table->integer('batch');
-                $table->timestamp('created_at')->nullable();
-            });
+            $sql = "CREATE TABLE IF NOT EXISTS `{$this->table}` (
+                `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                `migration` VARCHAR(255) NOT NULL,
+                `batch` INT NOT NULL,
+                `created_at` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
+
+            $this->connection->getPdo()->exec($sql);
         }
     }
 
