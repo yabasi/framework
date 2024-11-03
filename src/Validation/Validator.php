@@ -117,8 +117,23 @@ class Validator
 
     protected function addError($attribute, $rule, $parameters = []): void
     {
+        if (isset($this->errors[$attribute]) &&
+            in_array($this->getMessage($attribute, $rule, $parameters), $this->errors[$attribute])) {
+            return;
+        }
+
         $message = $this->getMessage($attribute, $rule, $parameters);
         $this->errors[$attribute][] = $this->replacePlaceholders($message, $attribute, $rule, $parameters);
+    }
+
+    public function validateEmail($attribute, $value): bool
+    {
+        if (empty($value)) {
+            return false;
+        }
+
+        $regex = "/^(?![.])(?!.*[.]{2})[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/";
+        return preg_match($regex, $value) === 1 && strlen($value) <= 254;
     }
 
     protected function getMessage($attribute, $rule, $parameters): string

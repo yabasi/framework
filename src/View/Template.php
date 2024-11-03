@@ -58,6 +58,7 @@ class Template
         $this->twig->addFunction(new TwigFunction('__', [$this, 'translate']));
         $this->twig->addFunction(new TwigFunction('url', [$this, 'url']));
         $this->twig->addFunction(new TwigFunction('csrf_field', [$this, 'csrfField']));
+        $this->twig->addFunction(new TwigFunction('csrf_token', [$this, 'getCsrfToken']));
         $this->twig->addFunction(new TwigFunction('old', [$this, 'getOldInput']));
 
         $this->twig->addExtension(new AssetTwigExtension($this->assetManager));
@@ -139,6 +140,11 @@ class Template
     {
         $token = $this->csrfProtection->generateToken();
         return '<input type="hidden" name="_csrf_token" value="' . $token . '">';
+    }
+
+    public function getCsrfToken(): string
+    {
+        return $this->csrfProtection->generateToken();
     }
 
     public function getTwig(): Environment
