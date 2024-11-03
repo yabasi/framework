@@ -3,6 +3,7 @@
 namespace Yabasi\Localization;
 
 use Yabasi\Config\Config;
+use Yabasi\Session\SessionManager;
 
 class Translator
 {
@@ -10,12 +11,16 @@ class Translator
     protected string $locale;
     protected string $fallbackLocale;
     protected Config $config;
+    protected SessionManager $session;
 
-    public function __construct(Config $config)
+    public function __construct(Config $config, SessionManager $session)
     {
         $this->config = $config;
-        $this->locale = $config->get('app.locale', 'en');
+        $this->session = $session;
+
+        $this->locale = $this->session->get('user_language') ?? $config->get('app.locale', 'en');
         $this->fallbackLocale = $config->get('app.fallback_locale', 'en');
+
         $this->loadTranslations($this->locale);
         if ($this->locale !== $this->fallbackLocale) {
             $this->loadTranslations($this->fallbackLocale);
@@ -24,8 +29,9 @@ class Translator
 
     public function get(string $key, array $replace = [], string $locale = null): string
     {
-        $locale = $locale ?: $this->locale;
-        $line = $this->getLine($key, $locale);
+        $currentLocale = $locale ?? $this->session->get('user_language') ?? $this->locale;
+
+        $line = $this->getLine($key, $currentLocale);
 
         if ($line === null) {
             return $key;
@@ -37,6 +43,10 @@ class Translator
 
     protected function getLine(string $key, string $locale): ?string
     {
+        if (!isset($this->translations[$locale])) {
+            $this->loadTranslations($locale);
+        }
+
         $parts = explode('.', $key);
         $line = $this->translations[$locale] ?? [];
 
@@ -74,12 +84,14 @@ class Translator
         }
 
         $content = file_get_contents($path);
-        $this->translations[$locale] = json_decode($content, true);
+        $this->translations[$locale] = json_decode($content, true) ?? [];
     }
 
     public function setLocale(string $locale): void
     {
         $this->locale = $locale;
+        $this->session->set('user_language', $locale);
+
         if (!isset($this->translations[$locale])) {
             $this->loadTranslations($locale);
         }
@@ -87,6 +99,6 @@ class Translator
 
     public function getLocale(): string
     {
-        return $this->locale;
+        return $this->session->get('user_language') ?? $this->locale;
     }
 }

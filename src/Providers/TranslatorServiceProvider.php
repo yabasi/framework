@@ -10,7 +10,10 @@ class TranslatorServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->container->singleton(Translator::class, function ($container) {
-            return new Translator($container->get('config'));
+            return new Translator(
+                $container->get('config'),
+                $container->get('session')
+            );
         });
     }
 }
