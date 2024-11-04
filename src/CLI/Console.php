@@ -16,6 +16,8 @@ use Yabasi\CLI\Commands\MigrateRefreshCommand;
 use Yabasi\CLI\Commands\MigrateResetCommand;
 use Yabasi\CLI\Commands\MigrateRollbackCommand;
 use Yabasi\CLI\Commands\MigrateStatusCommand;
+use Yabasi\CLI\Commands\ViewCacheCommand;
+use Yabasi\CLI\Commands\ViewClearCommand;
 use Yabasi\CLI\Generators\ControllerGenerator;
 use Yabasi\CLI\Generators\MiddlewareGenerator;
 use Yabasi\CLI\Generators\MigrationGenerator;
@@ -77,6 +79,9 @@ class Console
         $this->console->add($this->container->make(DatabaseDumpCommand::class));
         $this->console->add($this->container->make(DatabaseRestoreCommand::class));
         $this->console->add($this->container->make(KeyGenerateCommand::class));
+
+        $this->console->add($this->container->make(ViewCacheCommand::class));
+        $this->console->add($this->container->make(ViewClearCommand::class));
     }
 
     /**

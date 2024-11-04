@@ -123,10 +123,54 @@ class QueryBuilder
     /**
      * Add an order by clause to the query
      */
-    public function orderBy($column, $direction = 'ASC')
+    public function orderBy($column, $direction = 'ASC'): static
     {
         $this->query['order'][] = compact('column', 'direction');
         return $this;
+    }
+
+    /**
+     * Sorts latest records by created_at
+     *
+     * @param string $column
+     * @return $this
+     */
+    public function latest(string $column = 'created_at'): self
+    {
+        return $this->orderBy($column, 'DESC');
+    }
+
+    /**
+     * Sorts oldest records by created_at
+     *
+     * @param string $column
+     * @return $this
+     */
+    public function oldest(string $column = 'created_at'): self
+    {
+        return $this->orderBy($column, 'ASC');
+    }
+
+    /**
+     * DESC sorts by the specified column
+     *
+     * @param string $column
+     * @return $this
+     */
+    public function orderByDesc(string $column): self
+    {
+        return $this->orderBy($column, 'DESC');
+    }
+
+    /**
+     * ASC sorts by the specified column
+     *
+     * @param string $column
+     * @return $this
+     */
+    public function orderByAsc(string $column): self
+    {
+        return $this->orderBy($column, 'ASC');
     }
 
     /**

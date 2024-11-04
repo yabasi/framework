@@ -152,30 +152,94 @@ class Template
         return $this->twig;
     }
 
-    public function clearAllCache(): void
+    public function cacheAllTemplates(): void
     {
-        if ($this->config->get('cache.driver') === 'redis') {
-            $this->cacheManager->clear();
-        } else {
-            $cacheDir = $this->config->get('cache.twig', BASE_PATH . '/storage/cache/twig');
-            $this->clearDirectory($cacheDir);
+        $viewsPath = rtrim($this->config->get('paths.views'), '/\\');
+        $templates = $this->findAllTemplates($viewsPath);
+
+        if (empty($templates)) {
+            throw new \RuntimeException("No templates found in: {$viewsPath}");
+        }
+
+        foreach ($templates as $template) {
+            try {
+                echo "Caching template: {$template}\n";
+                $this->twig->load($template);
+            } catch (\Exception $e) {
+                throw new \RuntimeException("Error caching template {$template}: " . $e->getMessage());
+            }
         }
     }
 
-    private function clearDirectory($dir)
+    protected function findAllTemplates(string $path): array
     {
-        if (!is_dir($dir)) {
+        $templates = [];
+
+        try {
+            $iterator = new \RecursiveIteratorIterator(
+                new \RecursiveDirectoryIterator($path),
+                \RecursiveIteratorIterator::LEAVES_ONLY
+            );
+
+            foreach ($iterator as $file) {
+                if ($file->isDir() || $file->getBasename()[0] === '.') {
+                    continue;
+                }
+
+                if ($file->getExtension() === 'twig') {
+                    // Dosya yolunu normalize et
+                    $relativePath = str_replace(
+                        [$path . DIRECTORY_SEPARATOR, '.twig'],
+                        ['', ''],
+                        $file->getRealPath()
+                    );
+
+                    $templateName = str_replace(DIRECTORY_SEPARATOR, '/', $relativePath);
+
+                    $templates[] = $templateName;
+                }
+            }
+        } catch (\Exception $e) {
+            throw new \RuntimeException("Error scanning templates directory: " . $e->getMessage());
+        }
+
+        return $templates;
+    }
+
+    public function clearCache(): void
+    {
+        try {
+            if ($this->config->get('cache.driver') === 'redis') {
+                $this->cacheManager->tag('views')->flush();
+                echo "Redis view cache cleared.\n";
+            }
+
+            $cachePath = $this->config->get('cache.twig');
+            if (is_dir($cachePath)) {
+                $this->clearDirectory($cachePath);
+                echo "Twig cache directory cleared.\n";
+            }
+
+        } catch (\Exception $e) {
+            throw new \RuntimeException("Error clearing cache: " . $e->getMessage());
+        }
+    }
+
+    protected function clearDirectory(string $directory): void
+    {
+        if (!is_dir($directory)) {
             return;
         }
 
-        $files = new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator($dir, \RecursiveDirectoryIterator::SKIP_DOTS),
-            \RecursiveIteratorIterator::CHILD_FIRST
-        );
+        $items = new \FilesystemIterator($directory);
 
-        foreach ($files as $fileinfo) {
-            $todo = ($fileinfo->isDir() ? 'rmdir' : 'unlink');
-            $todo($fileinfo->getRealPath());
+        foreach ($items as $item) {
+            if ($item->isDir() && !$item->isLink()) {
+                $this->clearDirectory($item->getPathname());
+                @rmdir($item->getPathname());
+            } else {
+                @unlink($item->getPathname());
+            }
         }
     }
 }

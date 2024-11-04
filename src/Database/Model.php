@@ -15,14 +15,12 @@ use Yabasi\Support\Collection;
 
 abstract class Model
 {
-    // Statik özellikler
     protected static Container $container;
     protected static Connection $connection;
     protected static Logger $logger;
     protected static string $table;
     protected static array $eagerLoad = [];
 
-    // Örnek özellikleri
     protected array $attributes = [];
     protected array $original = [];
     protected array $casts = [];
@@ -30,7 +28,6 @@ abstract class Model
     protected array $relations = [];
     protected array $with = [];
 
-    // Yapıcı metod
     public function __construct(array $attributes = [])
     {
         $this->fill($attributes);
@@ -56,7 +53,6 @@ abstract class Model
         return $this->attributes;
     }
 
-    // Statik metodlar
     public static function setContainer(Container $container): void
     {
         static::$container = $container;
@@ -128,7 +124,26 @@ abstract class Model
         }
     }
 
-    // İlişki metodları
+    public static function latest(string $column = 'created_at'): QueryBuilder
+    {
+        return static::query()->orderBy($column, 'desc');
+    }
+
+    public static function oldest(string $column = 'created_at'): QueryBuilder
+    {
+        return static::query()->orderBy($column, 'asc');
+    }
+
+    public static function orderByDesc(string $column): QueryBuilder
+    {
+        return static::query()->orderBy($column, 'desc');
+    }
+
+    public static function orderByAsc(string $column): QueryBuilder
+    {
+        return static::query()->orderBy($column, 'asc');
+    }
+
     public function hasOne($relatedModel, $foreignKey = null, $localKey = 'id'): HasOne
     {
         $relatedModel = $this->getModelInstance($relatedModel);
